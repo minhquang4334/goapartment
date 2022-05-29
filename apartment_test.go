@@ -146,7 +146,7 @@ func currentTenant(tx *sqlx.Tx) (string, error) {
 }
 
 func openDB() (*sqlx.DB, error) {
-	dsn := "root@tcp(127.0.0.1:3306)/"
+	dsn := os.Getenv("DB_DSN")
 	db, err := sqlx.Open("mysql", dsn)
 	return db, err
 }
