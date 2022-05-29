@@ -123,7 +123,7 @@ func TestSwitchTenant(t *testing.T) {
 			if !gotErr {
 				gotTenant, err := currentTenant(tx)
 				if err != nil {
-					tx.Rollback()
+					_ = tx.Rollback()
 					t.Fatalf("Can not get current tenant: err=%v", err)
 				}
 				_ = tx.Commit()
