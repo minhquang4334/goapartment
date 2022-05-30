@@ -27,19 +27,27 @@ func ProvideApartment(db *sqlx.DB) (*Apartment, error) {
 	}, nil
 }
 
-func (ap *Apartment) SwitchTenant(ctx context.Context, tenant string) (*sqlx.Tx, error) {
+type queryHandler func(context.Context, *sqlx.Tx) error
+
+func (ap *Apartment) TenantExec(ctx context.Context, tenant string, handler queryHandler) error {
 	if tenant == "" {
-		return nil, ErrTenantIsRequired
+		return ErrTenantIsRequired
 	}
 	tx, err := ap.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	query := fmt.Sprintf("USE %s", tenant)
-	_, err = tx.ExecContext(ctx, query)
-	if err != nil {
+	if _, err = tx.ExecContext(ctx, query); err != nil {
 		_ = tx.Rollback()
-		return nil, err
+		return err
 	}
-	return tx, nil
+	if err = handler(ctx, tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	
+	_ = tx.Commit()
+
+	return nil
 }

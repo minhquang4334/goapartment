@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestNewApartment(t *testing.T) {
+func TestProvideApartment(t *testing.T) {
 	dummyDB, err := openDB()
 	if err != nil {
 		t.Fatalf("can not open db: %v", err)
@@ -115,21 +115,19 @@ func TestSwitchTenant(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			ctx := context.Background()
-			tx, err := apartment.SwitchTenant(ctx, tc.tenant)
-			gotErr := err != nil
-			if gotErr != tc.wantErr {
-				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
-			}
-			if !gotErr {
+			err := apartment.TenantExec(ctx, tc.tenant, func(ctx context.Context, tx *sqlx.Tx) error {
 				gotTenant, err := currentTenant(tx)
 				if err != nil {
-					_ = tx.Rollback()
-					t.Fatalf("Can not get current tenant: err=%v", err)
+					return err
 				}
-				_ = tx.Commit()
 				if diff := cmp.Diff(tc.tenant, gotTenant); diff != "" {
 					t.Errorf("-want, +got:\n%s", diff)
 				}
+				return nil
+			})
+			gotErr := err != nil
+			if gotErr != tc.wantErr {
+				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
 			}
 		})
 	}
@@ -146,7 +144,7 @@ func currentTenant(tx *sqlx.Tx) (string, error) {
 }
 
 func openDB() (*sqlx.DB, error) {
-	dsn := os.Getenv("DB_DSN")
+	dsn := "root@tcp(127.0.0.1:3306)/"
 	db, err := sqlx.Open("mysql", dsn)
 	return db, err
 }
