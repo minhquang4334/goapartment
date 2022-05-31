@@ -2,6 +2,7 @@ package goapartment
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"testing"
@@ -19,13 +20,13 @@ func setupDB() error {
 	q1 := `CREATE DATABASE IF NOT EXISTS tenant_1_test`
 	q2 := `CREATE DATABASE IF NOT EXISTS tenant_2_test`
 	q3 := `CREATE DATABASE IF NOT EXISTS tenant_3_test`
-	if 	_, err = db.Exec(q1); err != nil {
+	if _, err = db.Exec(q1); err != nil {
 		return fmt.Errorf("failed to create database tenant1: %w", err)
 	}
-	if 	_, err = db.Exec(q2); err != nil {
+	if _, err = db.Exec(q2); err != nil {
 		return fmt.Errorf("failed to create database tenant2: %w", err)
 	}
-	if 	_, err = db.Exec(q3); err != nil {
+	if _, err = db.Exec(q3); err != nil {
 		return fmt.Errorf("failed to create database tenant3: %w", err)
 	}
 	return nil
@@ -39,39 +40,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestProvideApartment(t *testing.T) {
-	dummyDB, err := openDB()
-	if err != nil {
-		t.Fatalf("can not open db: %v", err)
-	}
-	
-	testCases := []struct {
-		name string
-		db *sqlx.DB
-		wantErr bool
-	}{
-		{
-			"ok with existing sqlx db",
-			dummyDB,
-			false,
-		},
-		{
-			"ok with not existed sqlx db",
-			nil,
-			true,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := ProvideApartment(tc.db)
-			gotErr := err != nil
-			if gotErr != tc.wantErr {
-				t.Fatalf("wantErr=%v but got=%v", tc.wantErr, gotErr)
-			}
-		})
-	}
-}
-
 func TestSwitchTenant(t *testing.T) {
 	db, err := openDB()
 	if err != nil {
@@ -81,10 +49,10 @@ func TestSwitchTenant(t *testing.T) {
 		DB: db,
 	}
 	testCases := []struct {
-		name string
-		tenant string
+		name    string
+		tenant  string
 		wantErr bool
-	} {
+	}{
 		{
 			"false with empty tenant name",
 			"",
@@ -115,7 +83,7 @@ func TestSwitchTenant(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			ctx := context.Background()
-			err := apartment.TenantExec(ctx, tc.tenant, func(ctx context.Context, tx *sqlx.Tx) error {
+			err := apartment.TenantExec(ctx, tc.tenant, func(ctx context.Context, tx *sql.Tx) error {
 				gotTenant, err := currentTenant(tx)
 				if err != nil {
 					return err
@@ -133,7 +101,7 @@ func TestSwitchTenant(t *testing.T) {
 	}
 }
 
-func currentTenant(tx *sqlx.Tx) (string, error) {
+func currentTenant(tx *sql.Tx) (string, error) {
 	query := "SELECT DATABASE()"
 	row := tx.QueryRow(query)
 	var dbName string
