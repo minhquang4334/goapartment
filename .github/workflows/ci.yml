@@ -36,7 +36,6 @@ jobs:
       - run: go mod download
       - uses: aereal/waitmysql/setup@v1.1.0
       - name: wait for MySQL
-        # 代表してcommon DBのみ待つ
         run: waitmysql -dsn "$DB_DSN" -init-wait 1s -max-attempts 10 -max-delay 5s
       - name: test
         run: go test -v -race -coverprofile=coverage.out ./...
