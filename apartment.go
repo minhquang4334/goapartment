@@ -9,15 +9,19 @@ import (
 )
 
 var (
+	// ErrDBIsRequired は sqlx.DBを期待するのに、nilが渡された
 	ErrDBIsRequired = errors.New("sqlx.DB is required")
 
+	// ErrTenantIsRequired はtenantの名前を期待するのに、空文字列が渡された
 	ErrTenantIsRequired = errors.New("Tenant is required")
 )
 
+// Apartment は各Tenantに接続する情報をもつ構造体です
 type Apartment struct {
 	db *sqlx.DB
 }
 
+// ProvideApartment はApartmentを生成する関数です
 func ProvideApartment(db *sqlx.DB) (*Apartment, error) {
 	if db == nil {
 		return nil, ErrDBIsRequired
@@ -29,6 +33,7 @@ func ProvideApartment(db *sqlx.DB) (*Apartment, error) {
 
 type queryHandler func(context.Context, *sqlx.Tx) error
 
+// TenantExec はTenantのデータベスにアクセスしてQueryを実行するメソッドです
 func (ap *Apartment) TenantExec(ctx context.Context, tenant string, handler queryHandler) error {
 	if tenant == "" {
 		return ErrTenantIsRequired
