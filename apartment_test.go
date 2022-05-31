@@ -78,7 +78,7 @@ func TestSwitchTenant(t *testing.T) {
 		t.Fatalf("can not open db: %v", err)
 	}
 	apartment := Apartment{
-		db: db,
+		DB: db,
 	}
 	testCases := []struct {
 		name string

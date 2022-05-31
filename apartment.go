@@ -18,7 +18,7 @@ var (
 
 // Apartment は各Tenantに接続する情報をもつ構造体です
 type Apartment struct {
-	db *sqlx.DB
+	DB *sqlx.DB
 }
 
 // ProvideApartment はApartmentを生成する関数です
@@ -27,18 +27,18 @@ func ProvideApartment(db *sqlx.DB) (*Apartment, error) {
 		return nil, ErrDBIsRequired
 	}
 	return &Apartment{
-		db: db,
+		DB: db,
 	}, nil
 }
 
-type queryHandler func(context.Context, *sqlx.Tx) error
+type QueryHandler func(context.Context, *sqlx.Tx) error
 
 // TenantExec はTenantのデータベスにアクセスしてQueryを実行するメソッドです
-func (ap *Apartment) TenantExec(ctx context.Context, tenant string, handler queryHandler) error {
+func (ap *Apartment) TenantExec(ctx context.Context, tenant string, handler QueryHandler) error {
 	if tenant == "" {
 		return ErrTenantIsRequired
 	}
-	tx, err := ap.db.BeginTxx(ctx, nil)
+	tx, err := ap.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
