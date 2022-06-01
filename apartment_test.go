@@ -2,7 +2,6 @@ package goapartment
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"testing"
@@ -40,15 +39,41 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestTenantExec(t *testing.T) {
-	db, err := openDB()
+func TestProvideApartment(t *testing.T) {
+	dummyDB, err := openDB()
 	if err != nil {
 		t.Fatalf("can not open db: %v", err)
 	}
-	apartment := Apartment{
-		DB: db,
-	}
+
 	testCases := []struct {
+		name    string
+		db      *sqlx.DB
+		wantErr bool
+	}{
+		{
+			"ok with existing sqlx db",
+			dummyDB,
+			false,
+		},
+		{
+			"ok with not existed sqlx db",
+			nil,
+			true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ProvideApartment(tc.db)
+			gotErr := err != nil
+			if gotErr != tc.wantErr {
+				t.Fatalf("wantErr=%v but got=%v", tc.wantErr, gotErr)
+			}
+		})
+	}
+}
+
+var (
+	testCases = []struct {
 		name    string
 		tenant  string
 		wantErr bool
@@ -79,12 +104,22 @@ func TestTenantExec(t *testing.T) {
 			false,
 		},
 	}
+)
+
+func TestTenantExecTx(t *testing.T) {
+	db, err := openDB()
+	if err != nil {
+		t.Fatalf("can not open db: %v", err)
+	}
+	apartment := Apartment{
+		DB: db,
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			ctx := context.Background()
-			err := apartment.TenantExec(ctx, tc.tenant, func(ctx context.Context, tx *sql.Tx) error {
-				gotTenant, err := currentTenant(tx)
+			err := apartment.TenantExecTx(ctx, tc.tenant, func(ctx context.Context, tx *sqlx.Tx) error {
+				gotTenant, err := currentTenantTx(tx)
 				if err != nil {
 					return err
 				}
@@ -101,9 +136,49 @@ func TestTenantExec(t *testing.T) {
 	}
 }
 
-func currentTenant(tx *sql.Tx) (string, error) {
+func TestTenantExecConn(t *testing.T) {
+	db, err := openDB()
+	if err != nil {
+		t.Fatalf("can not open db: %v", err)
+	}
+	apartment := Apartment{
+		DB: db,
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(tt *testing.T) {
+			ctx := context.Background()
+			err := apartment.TenantExecConn(ctx, tc.tenant, func(ctx context.Context, conn *sqlx.Conn) error {
+				gotTenant, err := currentTenantConn(conn)
+				if err != nil {
+					return err
+				}
+				if diff := cmp.Diff(tc.tenant, gotTenant); diff != "" {
+					t.Errorf("-want, +got:\n%s", diff)
+				}
+				return nil
+			})
+			gotErr := err != nil
+			if gotErr != tc.wantErr {
+				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
+			}
+		})
+	}
+}
+
+func currentTenantTx(tx *sqlx.Tx) (string, error) {
 	query := "SELECT DATABASE()"
 	row := tx.QueryRow(query)
+	var dbName string
+	if err := row.Scan(&dbName); err != nil {
+		return "", err
+	}
+	return dbName, nil
+}
+
+func currentTenantConn(conn *sqlx.Conn) (string, error) {
+	query := "SELECT DATABASE()"
+	row := conn.QueryRowContext(context.Background(), query)
 	var dbName string
 	if err := row.Scan(&dbName); err != nil {
 		return "", err
