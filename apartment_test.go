@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestSwitchTenant(t *testing.T) {
+func TestTenantExec(t *testing.T) {
 	db, err := openDB()
 	if err != nil {
 		t.Fatalf("can not open db: %v", err)
