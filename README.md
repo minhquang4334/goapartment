@@ -9,14 +9,14 @@ go get github.com/minhquang4334/goapartment
 # Usage
 ```go
 // mysql
-db, err := sql.Open("mysql", dsn)
+db, err := sqlx.Open("mysql", dsn)
 if err != nil {
   return nil, err
 }
 apartment := goapartment.ProvideApartment(db)
-apartment.TenantExec(ctx, "tenantName", func(ctx context.Context, tx *sql.Tx) error {
+apartment.TenantExecConn(ctx, "tenantName", func(ctx context.Context, conn *sqlx.Conn) error {
   query := "SELECT DATABASE()"
-  row := tx.QueryRow(query)
+  row := conn.QueryRowContext(ctx, query)
   var dbName string
   if err := row.Scan(&dbName); err != nil {
     return "", err
