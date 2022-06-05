@@ -118,7 +118,7 @@ func TestTenantExecTx(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			ctx := context.Background()
-			tx, err := apartment.TenantExecTx(ctx, tc.tenant)
+			tx, err := apartment.TenantExecTx(ctx, tc.tenant, nil)
 			gotErr := err != nil
 			if gotErr != tc.wantErr {
 				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
