@@ -31,51 +31,38 @@ func ProvideApartment(db *sqlx.DB) (*Apartment, error) {
 	}, nil
 }
 
-type (
-	TxHandler func(context.Context, *sqlx.Tx) error
-
-	ConnHandler func(context.Context, *sqlx.Conn) error
-)
-
-// TenantExecTx open an transaction on tenant DB and run query handler on it. If error is raise when execute query, an error must be returned
-func (ap *Apartment) TenantExecTx(ctx context.Context, tenant string, handler TxHandler) error {
+// TenantExecTx open an transaction on tenant DB and return a instance of *sqlx.Tx
+// when error is raised, an error must be returned
+func (ap *Apartment) TenantExecTx(ctx context.Context, tenant string) (*sqlx.Tx, error) {
 	if tenant == "" {
-		return ErrTenantIsRequired
+		return nil, ErrTenantIsRequired
 	}
 	tx, err := ap.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	query := fmt.Sprintf("USE %s", tenant)
 	if _, err = tx.ExecContext(ctx, query); err != nil {
 		_ = tx.Rollback()
-		return err
-	}
-	if err = handler(ctx, tx); err != nil {
-		_ = tx.Rollback()
-		return err
+		return nil, err
 	}
 
-	_ = tx.Commit()
-
-	return nil
+	return tx, nil
 }
 
-// TenantExecConn connect to tenant database and run query handler on it. If error is raise when execute query, an error must be returned
-func (ap *Apartment) TenantExecConn(ctx context.Context, tenant string, handler ConnHandler) error {
+// TenantExecConn open an connection on tenant DB and return a instance of *sqlx.Conn
+// when error is raised, an error must be returned
+func (ap *Apartment) TenantExecConn(ctx context.Context, tenant string) (*sqlx.Conn, error) {
 	if tenant == "" {
-		return ErrTenantIsRequired
+		return nil, ErrTenantIsRequired
 	}
 	conn, err := ap.DB.Connx(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	query := fmt.Sprintf("USE %s", tenant)
 	if _, err = conn.ExecContext(ctx, query); err != nil {
-		return err
+		return nil, err
 	}
-	if err = handler(ctx, conn); err != nil {
-		return err
-	}
-	return nil
+	return conn, nil
 }

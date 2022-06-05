@@ -118,19 +118,19 @@ func TestTenantExecTx(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			ctx := context.Background()
-			err := apartment.TenantExecTx(ctx, tc.tenant, func(ctx context.Context, tx *sqlx.Tx) error {
+			tx, err := apartment.TenantExecTx(ctx, tc.tenant)
+			gotErr := err != nil
+			if gotErr != tc.wantErr {
+				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
+			}
+			if !tc.wantErr { 
 				gotTenant, err := currentTenantTx(tx)
 				if err != nil {
-					return err
+					t.Fatalf("can not execute query on current tenant: %v", err)
 				}
 				if diff := cmp.Diff(tc.tenant, gotTenant); diff != "" {
 					t.Errorf("-want, +got:\n%s", diff)
 				}
-				return nil
-			})
-			gotErr := err != nil
-			if gotErr != tc.wantErr {
-				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
 			}
 		})
 	}
@@ -148,19 +148,19 @@ func TestTenantExecConn(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			ctx := context.Background()
-			err := apartment.TenantExecConn(ctx, tc.tenant, func(ctx context.Context, conn *sqlx.Conn) error {
+			conn, err := apartment.TenantExecConn(ctx, tc.tenant)
+			gotErr := err != nil
+			if gotErr != tc.wantErr {
+				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
+			}
+			if !tc.wantErr {
 				gotTenant, err := currentTenantConn(conn)
 				if err != nil {
-					return err
+					t.Fatalf("can not execute query on current tenant: %v", err)
 				}
 				if diff := cmp.Diff(tc.tenant, gotTenant); diff != "" {
 					t.Errorf("-want, +got:\n%s", diff)
 				}
-				return nil
-			})
-			gotErr := err != nil
-			if gotErr != tc.wantErr {
-				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
 			}
 		})
 	}
