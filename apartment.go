@@ -2,6 +2,7 @@ package goapartment
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -33,11 +34,11 @@ func ProvideApartment(db *sqlx.DB) (*Apartment, error) {
 
 // TenantExecTx open an transaction on tenant DB and return a instance of *sqlx.Tx
 // when error is raised, an error must be returned
-func (ap *Apartment) TenantExecTx(ctx context.Context, tenant string) (*sqlx.Tx, error) {
+func (ap *Apartment) TenantExecTx(ctx context.Context, tenant string, txOptions *sql.TxOptions) (*sqlx.Tx, error) {
 	if tenant == "" {
 		return nil, ErrTenantIsRequired
 	}
-	tx, err := ap.DB.BeginTxx(ctx, nil)
+	tx, err := ap.DB.BeginTxx(ctx, txOptions)
 	if err != nil {
 		return nil, err
 	}

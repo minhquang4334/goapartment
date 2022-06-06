@@ -36,7 +36,7 @@ if err != nil {
   return "", err
 }
 apartment := goapartment.ProvideApartment(db)
-tx, err := apartment.TenantExecTx(ctx, "tenantName")
+tx, err := apartment.TenantExecTx(ctx, "tenantName", nil)
 if err != nil {
   return "", errors.New("can not open sqlx.Conn")
 }
