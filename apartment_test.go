@@ -123,7 +123,7 @@ func TestTenantExecTx(t *testing.T) {
 			if gotErr != tc.wantErr {
 				t.Fatalf("wantErr=%v but gotErr=%v, err=%v", tc.wantErr, gotErr, err)
 			}
-			if !tc.wantErr { 
+			if !tc.wantErr {
 				gotTenant, err := currentTenantTx(tx)
 				if err != nil {
 					t.Fatalf("can not execute query on current tenant: %v", err)
