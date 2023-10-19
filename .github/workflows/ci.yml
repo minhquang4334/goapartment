@@ -23,7 +23,7 @@ jobs:
       - name: setup DSNs
         run: |
           echo "DB_DSN=root@tcp(127.0.0.1:3306)/"            >> "$GITHUB_ENV"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v3
         with:
           go-version: '1.18.x'
@@ -58,7 +58,7 @@ jobs:
     needs:
       - test
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
         with:
           name: ${{ needs.test.outputs.coverage_id }}
