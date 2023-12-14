@@ -44,7 +44,7 @@ jobs:
           _value: go-coverage-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           echo "::set-output name=value::${_value}"
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.coverage_id.outputs.value }}
           path: ./coverage.out
