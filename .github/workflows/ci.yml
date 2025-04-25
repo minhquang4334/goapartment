@@ -34,7 +34,7 @@ jobs:
           restore-keys: |
             go-
       - run: go mod download
-      - uses: aereal/waitmysql/setup@v1.1.0
+      - uses: aereal/waitmysql/setup@v1.1.3
       - name: wait for MySQL
         run: waitmysql -dsn "$DB_DSN" -init-wait 1s -max-attempts 10 -max-delay 5s
       - name: test
